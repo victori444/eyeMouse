@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Face-Tracking Custom Cursor",
+    "description": "A custom cursor that tracks your face.",
+    "version": "1.0",
+    "permissions": [
+      "activeTab"
+    ],
+    "action": {
+    "default_popup": "hello.html"
+    }
+  }
+  

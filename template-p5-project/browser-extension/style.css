@@ -1,0 +1,16 @@
+/* Hide the system cursor when hovering the body */
+body {
+    cursor: none !important;
+  }
+  
+  /* Custom cursor styling */
+  #customCursor {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: green;
+    border-radius: 50%;
+    pointer-events: none;  /* Ensure it doesn't block interactions */
+    z-index: 10000;  /* Keep the custom cursor above other elements */
+  }
+  
