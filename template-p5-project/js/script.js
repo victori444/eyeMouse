@@ -1,50 +1,55 @@
-/**
- * Title of Project
- * Nancy He
- * 
- * This is a template. You must fill in the title, author, 
- * and this description to match your project!
- */
-
 "use strict";
+
 let faceMesh;
 let video;
 let faces = [];
 let options = { maxFaces: 1, refineLandmarks: false, flipHorizontal: false };
 
 function preload() {
-  // Load the faceMesh model
+  // Load the FaceMesh model
   faceMesh = ml5.faceMesh(options);
 }
 
 function setup() {
   createCanvas(640, 480);
+  
   // Create the webcam video and hide it
   video = createCapture(VIDEO);
-  video.size(640, 480);
+  video.size(640, 480); // Match the video size with the canvas size
   video.hide();
-  // Start detecting faces from the webcam video
-  faceMesh.detectStart(video, gotFaces);
 }
 
 function draw() {
   // Draw the webcam video
   image(video, 0, 0, width, height);
 
-  // Draw all the tracked face points
-  for (let i = 0; i < faces.length; i++) {
-    let face = faces[i];
-    for (let j = 0; j < face.keypoints.length; j++) {
-      let keypoint = face.keypoints[j];
-      fill(0, 255, 0);
-      noStroke();
-      circle(keypoint.x, keypoint.y, 5);
-    }
+  // Continuously detect faces in real-time
+  faceMesh.detect(video, gotFaces);
+
+  // If there are faces detected, track the nose tip and move the cursor
+  if (faces.length > 0) {
+    // Get the first detected face (you can handle multiple faces if needed)
+    let face = faces[0];
+
+    // Nose tip is usually the 4th point in the keypoints array (index 4)
+    let nose = face.keypoints[4];
+    
+    // Map the nose position to the canvas size (taking video size into account)
+    let noseX = map(nose.x, 0, video.width, 0, width);
+    let noseY = map(nose.y, 0, video.height, 0, height);
+
+    // Simulate mouse movement (move the cursor to the nose position)
+    cursor(noseX, noseY);
+
+    // Optionally, you can visualize the nose point
+    fill(0, 255, 0);  // Green color
+    noStroke();
+    ellipse(noseX, noseY, 10, 10);  // Draw a circle on the nose position
   }
 }
 
-// Callback function for when faceMesh outputs data
+// Callback function for when faceMesh detects faces
 function gotFaces(results) {
-  // Save the output to the faces variable
+  // Save the output of detected faces
   faces = results;
 }
