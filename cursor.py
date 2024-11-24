@@ -40,46 +40,64 @@ RIGHT_EYE = [362, 385, 387, 263, 373, 380]  # Right eye landmarks
 # Initialize caps lock state
 caps_lock = False
 
-def draw_virtual_keyboard(frame):
-    """Draws a virtual keyboard on the video frame."""
+def draw_virtual_keyboard(frame, hovered_key=None):
+    """Draws a visually appealing virtual keyboard on the video frame with functionality."""
+    overlay = frame.copy()  # Create a copy of the frame for blending
+    alpha = 0.6  # Transparency level (0.0 to 1.0)
+
     y_offset = KEY_POS[1]
+    space_rect = None  # To store the space bar's rectangle coordinates for click detection
     for row in KEYS:
         x_offset = KEY_POS[0]
         for key in row:
-            # Skip drawing "Shift", "Space", "Enter", and "Backspace" text
+            # Handle special keys (like space, backspace, enter, shift)
             if key == 'Space':
-                key_width = KEY_WIDTH * 5 + KEY_MARGIN * 4  # Space is much larger
-                key_text = " "  # Space key prints a space, not the word "Space"
+                key_width = KEY_WIDTH * 2 + KEY_MARGIN 
+                key_text = "Space"  # Space key prints a space, not the word "Space"
                 space_rect = (x_offset, y_offset, key_width, KEY_HEIGHT)  # Define space bar rectangle
             elif key == 'Backspace':
-                key_width = KEY_WIDTH * 2 + KEY_MARGIN
-                key_text = ""  # Do not display the word "Backspace"
-                space_rect = None  # No rectangle needed for "Backspace"
+                key_width = KEY_WIDTH * 2 + KEY_MARGIN  # Backspace is twice the width
+                key_text = "Delete"  # Arrow symbol for Backspace
             elif key == 'Enter':
-                key_width = KEY_WIDTH * 2 + KEY_MARGIN
-                key_text = ""  # Do not display the word "Enter"
-                space_rect = None  # No rectangle needed for "Enter"
+                key_width = KEY_WIDTH * 2 + KEY_MARGIN  # Enter is twice the width
+                key_text = "Enter"
             elif key == 'Shift':
-                key_width = KEY_WIDTH * 2 + KEY_MARGIN
-                key_text = ""  # Do not display the word "Shift"
-                space_rect = None  # No rectangle needed for "Shift"
+                key_width = KEY_WIDTH * 2 + KEY_MARGIN  # Shift is twice the width
+                key_text = "Shift"
             else:
-                key_width = KEY_WIDTH
+                key_width = KEY_WIDTH  # Regular key width
                 key_text = key.upper() if caps_lock else key.lower()
-                space_rect = None  # No special handling for other keys
 
-            # Draw a rectangle for each key
-            cv2.rectangle(frame, (x_offset, y_offset), (x_offset + key_width, y_offset + KEY_HEIGHT), (255, 255, 255), -1)
-            # Write the key's label on the rectangle
-            if key_text:  # Only display text if it's not an empty string
-                cv2.putText(frame, key_text, (x_offset + 10, y_offset + 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-            
-            # If it's the Space key, store the rectangle coordinates
-            if space_rect:
-                return space_rect
+            # Change key color when hovered over
+            if hovered_key == key:
+                color = (100, 255, 100)  # Green for hovered key
+            else:
+                color = (200, 200, 255)  # Light purple background
 
+            # Draw the key background on the overlay
+            cv2.rectangle(overlay, (x_offset, y_offset), (x_offset + key_width, y_offset + KEY_HEIGHT), color, -1)  # Fill the key
+
+            # Draw the key border (fully opaque)
+            cv2.rectangle(overlay, (x_offset, y_offset), (x_offset + key_width, y_offset + KEY_HEIGHT), (100, 100, 150), 2, cv2.LINE_AA)
+
+            # Add the text for each key
+            font_scale = 1
+            font_thickness = 2
+            text_size = cv2.getTextSize(key_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)[0]
+            text_x = x_offset + (key_width - text_size[0]) // 2
+            text_y = y_offset + (KEY_HEIGHT + text_size[1]) // 2
+            cv2.putText(overlay, key_text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (50, 50, 100), font_thickness, cv2.LINE_AA)
+
+            # Increment x_offset for the next key
             x_offset += key_width + KEY_MARGIN
+        
+        # Increment y_offset for the next row
         y_offset += KEY_HEIGHT + KEY_MARGIN
+
+    # Blend the overlay with the original frame (for transparency effect)
+    cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+
+    return space_rect
 
 def detect_wink(face_landmarks, left_eye_indices, right_eye_indices):
     """Detects winks based on the eye aspect ratio (EAR)."""
