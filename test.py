@@ -36,6 +36,10 @@ sound_effect_des = pygame.mixer.Sound("sounds\des.mp3")
 # Wait for camera to initialize
 time.sleep(2)
 
+############################################################
+##### DRAG & DROP FUNCTIONALITY WITH EYEBROW MOVEMENT ######
+############################################################
+
 drag_enabled = False
 last_eyebrow_raised = False  # Tracks the previous eyebrow state
 last_eyebrow_toggle_time = 0  # To debounce eyebrow raises
@@ -47,19 +51,6 @@ LEFT_EYE_TOP = [159]  # Verified top of left eye
 RIGHT_EYE_TOP = [386]  # Verified top of right eye
 
 EYEBROW_RAISE_THRESHOLD = 0.05  # Adjust for sensitivity
-
-SPECIAL_KEYS = {
-
-    'Space': 'space',  # Space bar
-
-    'Enter': 'enter',  # Enter key
-
-    'Backspace': 'backspace',  # Backspace key
-
-    'Shift': 'shift'  # Shift key
-
-}
-
 def detect_eyebrow_raise(face_landmarks):
 
     def calculate_distance(eyebrow_index, eye_index):
@@ -91,6 +82,19 @@ def detect_eyebrow_toggle(face_landmarks):
 
     # Update the last eyebrow state
     last_eyebrow_raised = eyebrow_raised
+
+############################################################
+#####       VIRTUAL KEYBOARD WITH HAND TRACKING       ######
+############################################################
+
+
+SPECIAL_KEYS = {
+    'Space': 'space',  # Space bar
+    'Enter': 'enter',  # Enter key
+    'Backspace': 'backspace',  # Backspace key
+    'Shift': 'shift'  # Shift key
+}
+
 
 KEYS = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],
@@ -183,6 +187,10 @@ def get_key_at_position(x, y):
 wink_start_time = None  
 wink_threshold_duration = 0.3  # Duration (in seconds) required for a wink to execute a click
 
+############################################################
+#####    TRACK, CLICK & SCROLL WITH FACE DETECTION    ######
+############################################################
+
 def detect_wink(face_landmarks, left_eye_indices, right_eye_indices):
     
     def eye_aspect_ratio(eye_indices):
@@ -225,44 +233,7 @@ def detect_head_tilt(face_landmarks):
         return "down"
     return None
 
-def detect_mouth_opening(face_landmarks, mouth_indices):
 
-    vertical_dist = ((face_landmarks[mouth_indices[2]].x - face_landmarks[mouth_indices[0]].x) ** 2 +
-
-                     (face_landmarks[mouth_indices[2]].y - face_landmarks[mouth_indices[0]].y) ** 2) ** 0.5
-
-    return vertical_dist
-
-def voice_typing():
-
-    with sr.Microphone() as source:
-
-        print("Listening for voice input...")
-        sound_effect_voice.play()
-
-        try:
-
-            audio = recognizer.listen(source, timeout=5)
-
-            text = recognizer.recognize_google(audio)
-
-            print(f"Recognized: {text}")
-
-            pyautogui.typewrite(text)  # Type the recognized text
-
-        except sr.WaitTimeoutError:
-
-            print("No speech detected within the timeout.")
-            sound_effect_voiceoff.play()
-
-        except sr.UnknownValueError:
-
-            print("Speech was not clear.")
-            sound_effect_voiceoff.play()
-
-        except sr.RequestError as e:
-
-            print(f"Could not request results; {e}")
 
 def detect_hand_gesture(hand_landmarks):
 
@@ -317,11 +288,9 @@ def track_face_cursor(face_landmarks, frame_width, frame_height):
     
     return screen_x, screen_y
 
-
-# Add a variable to control if a click has happened or not
-last_click_time = time.time()
-
-
+############################################################
+#####            VOICE RECOGNITION TO TEXT            ######
+############################################################
 MOUTH = [13, 312, 14, 317]  
 
 MOUTH_OPEN_THRESHOLD = 0.05  # Adjust this threshold as needed
@@ -330,6 +299,52 @@ WINDOW_NAME_KEYBOARD = 'Virtual Keyboard Control'
 WINDOW_NAME_FACE = 'Facial Control'
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
+
+def detect_mouth_opening(face_landmarks, mouth_indices):
+
+    vertical_dist = ((face_landmarks[mouth_indices[2]].x - face_landmarks[mouth_indices[0]].x) ** 2 +
+
+                     (face_landmarks[mouth_indices[2]].y - face_landmarks[mouth_indices[0]].y) ** 2) ** 0.5
+
+    return vertical_dist
+
+def voice_typing():
+
+    with sr.Microphone() as source:
+
+        print("Listening for voice input...")
+        sound_effect_voice.play()
+
+        try:
+
+            audio = recognizer.listen(source, timeout=5)
+
+            text = recognizer.recognize_google(audio)
+
+            print(f"Recognized: {text}")
+
+            pyautogui.typewrite(text)  # Type the recognized text
+
+        except sr.WaitTimeoutError:
+
+            print("No speech detected within the timeout.")
+            sound_effect_voiceoff.play()
+
+        except sr.UnknownValueError:
+
+            print("Speech was not clear.")
+            sound_effect_voiceoff.play()
+
+        except sr.RequestError as e:
+
+            print(f"Could not request results; {e}")
+
+
+# Add a variable to control if a click has happened or not
+last_click_time = time.time()
+
+
+
 
 cv2.namedWindow(WINDOW_NAME_KEYBOARD, cv2.WINDOW_NORMAL)
 cv2.namedWindow(WINDOW_NAME_FACE, cv2.WINDOW_NORMAL)
@@ -350,8 +365,9 @@ HAND_DETECTION_THRESHOLD = 5
 
 
 
-
-# main loop
+############################################################
+#####                    MAIN LOOP                    ######
+############################################################
 while True:
     ret, frame = cap.read()
     if not ret:
